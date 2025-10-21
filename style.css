@@ -8,5 +8,17 @@ button:hover { background:#0056b3;}
 .gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:20px;}
 .gallery img { width:100%; border-radius:5px;}
 .gallery-item { position:relative;}
+.gallery-item {
+  display: inline-block;
+  margin: 5px;
+}
+
+.gallery-item img {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}
+
 .checkbox { position:absolute; top:5px; left:5px;}
 @media(max-width:600px){ .gallery { grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); } }
