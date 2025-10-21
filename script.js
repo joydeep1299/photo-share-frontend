@@ -7,7 +7,7 @@ const downloadBtn = document.getElementById('downloadBtn');
 
 const CLOUD_NAME = 'dj5gimioa';
 const UPLOAD_PRESET = 'unsigned_upload';
-const API_URL = 'https://your-render-backend.onrender.com';
+const API_URL = 'https://photo-share-backend-z4vu.onrender.com/';
 
 uploadBtn.addEventListener('click', async () => {
   const files = fileInput.files;
