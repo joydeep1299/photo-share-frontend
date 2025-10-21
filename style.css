@@ -1,73 +1,60 @@
 body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
 .container { padding: 20px; max-width: 900px; margin: auto; text-align: center; }
 
-.gallery {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center; /* center images */
-  margin-top: 20px;
-}
-
-.gallery-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 150px;
-  cursor: pointer; /* click image to select */
-  position: relative;
-}
-
-.gallery-item img {
-  width: 150px;
-  height: 150px;
-  object-fit: cover;
-  border: 2px solid #ccc;
-  transition: border 0.2s;
-}
-
-.gallery-item.selected img {
-  border: 3px solid #007bff;
-}
-
-.checkbox {
-  width: 20px;
-  height: 20px;
-  margin-top: 5px;
+.controls { margin-bottom: 10px; }
+button {
+  padding: 10px 15px;
   cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  margin-left: 5px;
 }
+#uploadBtn, #downloadBtn { background-color: #28a745; } /* green buttons */
 
-button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
-
-.progress-container { margin-top: 10px; height: 20px; display: flex; gap: 10px; }
-.progress-bar { flex: 1; height: 100%; background: #eee; position: relative; }
+.progress-container { margin: 10px 0; height: 20px; display: flex; gap: 10px; }
+.progress-bar { flex: 1; height: 100%; background: #eee; position: relative; border-radius: 10px; overflow: hidden; }
 .progress-bar::after {
   content: '';
   position: absolute;
   left: 0; top: 0;
   height: 100%;
   width: 0;
-  background: #4caf50;
+  background: #28a745;
   transition: width 0.2s;
 }
+
+.gallery { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 20px; }
+.gallery-item {
+  position: relative;
+  width: 150px;
+  cursor: pointer;
+}
+.gallery-item img {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+}
+.checkbox {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 25px;
+  height: 25px;
+  z-index: 2;
+  cursor: pointer;
+}
+.gallery-item.selected img { border: 3px solid #28a745; }
 
 #downloadBtn {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
 }
 
 /* Mobile adjustments */
 @media (max-width: 600px) {
-  .gallery-item {
-    width: 45%;
-  }
-  .checkbox {
-    width: 25px;
-    height: 25px;
-  }
+  .gallery-item { width: 45%; }
+  .checkbox { width: 30px; height: 30px; }
 }
