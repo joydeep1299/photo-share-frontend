@@ -37,17 +37,19 @@ async function fetchGallery() {
     const res = await fetch(`${API_URL}/images`);
     const images = await res.json();
 
-    gallery.innerHTML = '';
+    gallery.innerHTML = ''; // clear existing gallery
+
     images.forEach(url => {
       const div = document.createElement('div');
       div.className = 'gallery-item';
-      div.innerHTML = `<input type="checkbox" class="checkbox" value="${url}"><img src="${url}">`;
+      div.innerHTML = `<input type="checkbox" class="checkbox" value="${url}"><img src="${url}" alt="photo">`;
       gallery.appendChild(div);
     });
   } catch (err) {
     console.error('Error fetching gallery:', err);
   }
 }
+
 
 // Multi-download selected images
 downloadBtn.addEventListener('click', async () => {
