@@ -39,6 +39,9 @@ button {
   border: none;
   border-radius: 5px;
   color: white;
+}
+
+#uploadBtn, #downloadBtn, #selectAllBtn, #deselectAllBtn {
   background-color: #28a745;
   font-size: 14px;
 }
