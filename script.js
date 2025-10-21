@@ -11,10 +11,10 @@ const UPLOAD_PRESET = 'unsigned_upload';
 const API_URL = 'https://photo-share-backend-z4vu.onrender.com';
 
 let page = 0;
-const limit = 50; // load 50 images per scroll
+const limit = 50;
 let loading = false;
 
-// --- Upload files with background support ---
+// --- Upload files with proper progress calculation ---
 uploadBtn.addEventListener('click', async () => {
   const files = fileInput.files;
   if (!files.length) return alert('Select files first');
@@ -22,37 +22,52 @@ uploadBtn.addEventListener('click', async () => {
   uploadStatus.textContent = 'Uploading...';
   uploadProgressBar.style.width = '0%';
 
+  const totalFiles = files.length;
+  let uploadedFiles = 0;
+
   const uploadPromises = Array.from(files).map(file => {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       const formData = new FormData();
+
       formData.append('file', file);
       formData.append('upload_preset', UPLOAD_PRESET);
 
       xhr.upload.addEventListener('progress', e => {
         if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
+          const percentPerFile = (e.loaded / e.total) * (1 / totalFiles);
+          const percent = Math.round((uploadedFiles / totalFiles + percentPerFile) * 100);
           uploadProgressBar.style.width = `${percent}%`;
         }
       });
 
-      xhr.onload = () => resolve();
+      xhr.onload = () => {
+        uploadedFiles++;
+        resolve();
+      };
+
       xhr.onerror = () => reject();
+
       xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
       xhr.send(formData);
     });
   });
 
-  await Promise.all(uploadPromises);
-  uploadProgressBar.style.width = '100%';
-  uploadStatus.textContent = `Uploaded ${files.length} files`;
-  fileInput.value = '';
-  page = 0;
-  gallery.innerHTML = '';
-  fetchGallery();
+  try {
+    await Promise.all(uploadPromises);
+    uploadProgressBar.style.width = '100%';
+    uploadStatus.textContent = `Uploaded ${files.length} files`;
+    fileInput.value = '';
+    page = 0;
+    gallery.innerHTML = '';
+    fetchGallery();
+  } catch (err) {
+    console.error(err);
+    uploadStatus.textContent = 'Upload failed!';
+  }
 });
 
-// --- Fetch images (lazy load, 50 per batch) ---
+// --- Fetch images with lazy load & pagination ---
 async function fetchGallery() {
   if (loading) return;
   loading = true;
@@ -87,7 +102,7 @@ async function fetchGallery() {
 
       // Click div to toggle selection
       div.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'INPUT') { // only toggle if not checkbox directly
+        if (e.target.tagName !== 'INPUT') { 
           checkbox.checked = !checkbox.checked;
         }
         div.classList.toggle('selected', checkbox.checked);
@@ -114,7 +129,7 @@ window.addEventListener('scroll', () => {
   }
 });
 
-// --- Download images individually (background support) ---
+// --- Download images individually ---
 downloadBtn.addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.checkbox:checked')).map(c => c.value);
   if (!selected.length) return alert('Select files');
