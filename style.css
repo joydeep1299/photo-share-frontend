@@ -1,24 +1,73 @@
+body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+.container { padding: 20px; max-width: 900px; margin: auto; text-align: center; }
 
-body { font-family: Arial,sans-serif; margin:0; background:#f5f5f5;}
-.container { max-width:1000px; margin:auto; padding:20px;}
-h1,h2 { text-align:center;}
-.upload-section,.gallery-section { background:#fff; padding:20px; border-radius:10px; margin-bottom:40px; box-shadow:0 0 10px rgba(0,0,0,0.1);}
-button { padding:10px 20px; margin-top:10px; border:none; border-radius:5px; background:#007bff; color:white; cursor:pointer;}
-button:hover { background:#0056b3;}
-.gallery { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:20px;}
-.gallery img { width:100%; border-radius:5px;}
-.gallery-item { position:relative;}
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center; /* center images */
+  margin-top: 20px;
+}
+
 .gallery-item {
-  display: inline-block;
-  margin: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 150px;
+  cursor: pointer; /* click image to select */
+  position: relative;
 }
 
 .gallery-item img {
   width: 150px;
   height: 150px;
   object-fit: cover;
-  border: 1px solid #ccc;
+  border: 2px solid #ccc;
+  transition: border 0.2s;
 }
 
-.checkbox { position:absolute; top:5px; left:5px;}
-@media(max-width:600px){ .gallery { grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); } }
+.gallery-item.selected img {
+  border: 3px solid #007bff;
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  margin-top: 5px;
+  cursor: pointer;
+}
+
+button { padding: 10px 15px; margin-top: 10px; cursor: pointer; }
+
+.progress-container { margin-top: 10px; height: 20px; display: flex; gap: 10px; }
+.progress-bar { flex: 1; height: 100%; background: #eee; position: relative; }
+.progress-bar::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 0;
+  background: #4caf50;
+  transition: width 0.2s;
+}
+
+#downloadBtn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .gallery-item {
+    width: 45%;
+  }
+  .checkbox {
+    width: 25px;
+    height: 25px;
+  }
+}
