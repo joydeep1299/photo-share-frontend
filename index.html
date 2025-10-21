@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,18 +9,20 @@
 <body>
 <div class="container">
   <h1>Photo Share</h1>
-  <section class="upload-section">
-    <h2>Upload Photos</h2>
-    <input type="file" id="fileInput" multiple>
-    <button id="uploadBtn">Upload</button>
-    <div id="uploadStatus"></div>
-  </section>
-  <section class="gallery-section">
-    <h2>Gallery</h2>
-    <div class="gallery" id="gallery"></div>
-<button id="downloadBtn">Download Selected</button>
-  </section>
+  <input type="file" id="fileInput" multiple>
+  <button id="uploadBtn">Upload Photos</button>
+  
+  <div class="progress-container">
+    <div id="uploadProgress" class="progress-bar"></div>
+    <div id="downloadProgress" class="progress-bar"></div>
+  </div>
+
+  <div id="uploadStatus"></div>
+  <div id="gallery" class="gallery"></div>
 </div>
+
+<button id="downloadBtn">Download Selected</button>
+
 <script src="script.js"></script>
 </body>
 </html>
