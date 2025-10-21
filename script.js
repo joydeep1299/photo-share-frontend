@@ -7,7 +7,7 @@ const downloadBtn = document.getElementById('downloadBtn');
 // Your Cloudinary and backend
 const CLOUD_NAME = 'dj5gimioa';
 const UPLOAD_PRESET = 'unsigned_upload';
-const API_URL = 'https://photo-share-backend-z4vu.onrender.com/';
+const API_URL = 'https://photo-share-backend-z4vu.onrender.com';
 
 // Upload files concurrently and update gallery after each upload
 uploadBtn.addEventListener('click', async () => {
