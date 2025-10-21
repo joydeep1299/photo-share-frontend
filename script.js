@@ -14,7 +14,6 @@ let page = 0;
 const limit = 50;
 let loading = false;
 
-// Keep screen awake
 let wakeLock = null;
 async function requestWakeLock() {
   try { wakeLock = await navigator.wakeLock.request('screen'); }
@@ -22,7 +21,7 @@ async function requestWakeLock() {
 }
 async function releaseWakeLock() { if (wakeLock) await wakeLock.release(); }
 
-// Upload files
+// Chunked / Progressive Upload
 uploadBtn.addEventListener('click', async () => {
   const files = fileInput.files;
   if (!files.length) return alert('Select files first');
@@ -35,8 +34,8 @@ uploadBtn.addEventListener('click', async () => {
   uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
 
   try {
-    for (let file of files) {
-      await uploadSingleFile(file);
+    for (const file of files) {
+      await uploadFileChunked(file);
       uploadedFiles++;
       uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
     }
@@ -54,22 +53,34 @@ uploadBtn.addEventListener('click', async () => {
   }
 });
 
-function uploadSingleFile(file) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+async function uploadFileChunked(file) {
+  const chunkSize = 2 * 1024 * 1024; // 2MB
+  const totalChunks = Math.ceil(file.size / chunkSize);
+  const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+
+  let start = 0;
+  for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+    const end = Math.min(start + chunkSize, file.size);
+    const blob = file.slice(start, end);
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', blob, file.name);
     formData.append('upload_preset', UPLOAD_PRESET);
+    formData.append('chunk_index', chunkIndex);
+    formData.append('total_chunks', totalChunks);
 
-    xhr.onload = () => resolve();
-    xhr.onerror = () => reject();
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', cloudinaryUrl);
+      xhr.onload = () => xhr.status === 200 ? resolve() : reject(xhr.responseText);
+      xhr.onerror = () => reject('Network error');
+      xhr.send(formData);
+    });
 
-    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
-    xhr.send(formData);
-  });
+    start += chunkSize;
+  }
 }
 
-// Fetch gallery
+// Fetch Gallery with lazy load
 async function fetchGallery() {
   if (loading) return;
   loading = true;
@@ -89,7 +100,6 @@ async function fetchGallery() {
       const checkbox = div.querySelector('.checkbox');
       const img = div.querySelector('img');
 
-      // Lazy load thumbnail
       const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) { img.src = img.dataset.src; obs.unobserve(img); }
@@ -97,13 +107,11 @@ async function fetchGallery() {
       });
       observer.observe(img);
 
-      // Click div/image to toggle selection
       div.addEventListener('click', (e) => {
         if (e.target.tagName !== 'INPUT') checkbox.checked = !checkbox.checked;
         div.classList.toggle('selected', checkbox.checked);
       });
 
-      // Checkbox change updates selection
       checkbox.addEventListener('change', () => {
         div.classList.toggle('selected', checkbox.checked);
       });
@@ -117,12 +125,10 @@ async function fetchGallery() {
   }
 }
 
-// Infinite scroll
 window.addEventListener('scroll', () => {
   if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) fetchGallery();
 });
 
-// Download selected
 downloadBtn.addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.checkbox:checked')).map(c => c.value);
   if (!selected.length) return alert('Select files');
@@ -153,14 +159,11 @@ downloadBtn.addEventListener('click', async () => {
   releaseWakeLock();
 });
 
-// Select All / Deselect All
 selectAllBtn.addEventListener('click', () => {
   document.querySelectorAll('.checkbox').forEach(c => { c.checked = true; c.closest('.gallery-item').classList.add('selected'); });
 });
-
 deselectAllBtn.addEventListener('click', () => {
   document.querySelectorAll('.checkbox').forEach(c => { c.checked = false; c.closest('.gallery-item').classList.remove('selected'); });
 });
 
-// Initial load
 window.addEventListener('load', fetchGallery);
