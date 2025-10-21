@@ -234,12 +234,7 @@ window.addEventListener('load', () => {
   fetchGallery();
 });
 
-const uploadWarning = document.getElementById('uploadWarning');
 
-uploadBtn.addEventListener('click', async () => {
-  uploadWarning.style.display = 'block'; // show warning
-  uploadBtn.disabled = true;
-  await requestWakeLock();
 
   // ... your existing upload code ...
 
