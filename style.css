@@ -1,4 +1,3 @@
-/* --- General Styles --- */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
@@ -12,13 +11,19 @@ body {
   text-align: center;
 }
 
-/* --- Controls (file input + upload button) --- */
 .controls {
   display: flex;
-  justify-content: center; /* center horizontally */
+  justify-content: center;
   align-items: center;
-  gap: 5px; /* 5px gap between file input and button */
+  gap: 5px;
   margin-bottom: 10px;
+}
+
+.selection-controls {
+  margin: 10px 0;
+  display: flex;
+  justify-content: center;
+  gap: 5px;
 }
 
 input[type="file"] {
@@ -36,38 +41,16 @@ button {
   color: white;
 }
 
-#uploadBtn, #downloadBtn {
-  background-color: #28a745; /* green */
+#uploadBtn, #downloadBtn, #selectAllBtn, #deselectAllBtn {
+  background-color: #28a745;
+  font-size: 14px;
 }
 
-/* --- Progress bars --- */
-.progress-container {
+#uploadStatus {
   margin: 10px 0;
-  height: 20px;
-  display: flex;
-  gap: 10px;
+  font-weight: bold;
 }
 
-.progress-bar {
-  flex: 1;
-  height: 100%;
-  background: #eee;
-  position: relative;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-bar::after {
-  content: '';
-  position: absolute;
-  left: 0; top: 0;
-  height: 100%;
-  width: 0%;
-  background: #28a745;
-  transition: width 0.2s;
-}
-
-/* --- Gallery --- */
 .gallery {
   display: flex;
   flex-wrap: wrap;
@@ -79,12 +62,14 @@ button {
 .gallery-item {
   position: relative;
   width: 150px;
+  height: 150px;
   cursor: pointer;
+  overflow: hidden;
 }
 
 .gallery-item img {
   width: 100%;
-  height: 150px;
+  height: 100%;
   object-fit: cover;
   display: block;
   border-radius: 5px;
@@ -105,7 +90,6 @@ button {
   box-sizing: border-box;
 }
 
-/* --- Sticky download button --- */
 #downloadBtn {
   position: fixed;
   bottom: 20px;
@@ -113,10 +97,10 @@ button {
   z-index: 10;
 }
 
-/* --- Mobile adjustments --- */
 @media (max-width: 600px) {
   .gallery-item {
     width: 45%;
+    height: 120px;
   }
   .checkbox {
     width: 30px;
