@@ -4,36 +4,34 @@ const uploadStatus = document.getElementById('uploadStatus');
 const gallery = document.getElementById('gallery');
 const downloadBtn = document.getElementById('downloadBtn');
 
-// Replace with your Cloudinary and Render backend
+// Your Cloudinary and backend
 const CLOUD_NAME = 'dj5gimioa';
 const UPLOAD_PRESET = 'unsigned_upload';
 const API_URL = 'https://photo-share-backend-z4vu.onrender.com/';
 
-// Upload files
+// Upload files concurrently and update gallery after each upload
 uploadBtn.addEventListener('click', async () => {
   const files = fileInput.files;
   if (!files.length) return alert('Select files first');
 
   uploadStatus.textContent = 'Uploading...';
 
-  for (let file of files) {
+  // Concurrent uploads
+  const uploadPromises = Array.from(files).map(file => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', UPLOAD_PRESET);
-    formData.append('folder', ''); // optional, leave empty for root
+    return fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method:'POST', body:formData });
+  });
 
-    // Upload each file
-    await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, { method:'POST', body:formData });
-    
-    // Update gallery after each file uploaded
-    fetchGallery();
-  }
+  await Promise.all(uploadPromises);
 
   uploadStatus.textContent = `Uploaded ${files.length} files`;
   fileInput.value = '';
+  fetchGallery(); // update gallery
 });
 
-// Fetch and render gallery
+// Fetch gallery and render
 async function fetchGallery() {
   try {
     const res = await fetch(`${API_URL}/images`);
@@ -56,20 +54,24 @@ downloadBtn.addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.checkbox:checked')).map(c=>c.value);
   if (!selected.length) return alert('Select files');
 
-  const res = await fetch(`${API_URL}/download`, {
+  uploadStatus.textContent = 'Preparing download...';
+
+  fetch(`${API_URL}/download`, {
     method:'POST',
     headers:{ 'Content-Type':'application/json' },
     body: JSON.stringify({ files: selected })
+  })
+  .then(res => res.blob())
+  .then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'photos.zip';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    uploadStatus.textContent = '';
   });
-
-  const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'photos.zip';
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
 });
 
 // Initial gallery load
