@@ -1,0 +1,27 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Share</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <h1>Photo Share</h1>
+  <section class="upload-section">
+    <h2>Upload Photos</h2>
+    <input type="file" id="fileInput" multiple>
+    <button id="uploadBtn">Upload</button>
+    <div id="uploadStatus"></div>
+  </section>
+  <section class="gallery-section">
+    <h2>Gallery</h2>
+    <button id="downloadBtn">Download Selected</button>
+    <div class="gallery" id="gallery"></div>
+  </section>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
