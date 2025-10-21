@@ -3,9 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Photo Share PWA</title>
+<title>Photo Share</title>
 <link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <div class="container">
@@ -28,10 +27,5 @@
 <button id="downloadBtn">Download Selected</button>
 
 <script src="script.js"></script>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').then(() => console.log('SW registered'));
-  }
-</script>
 </body>
 </html>
