@@ -14,6 +14,7 @@ let page = 0;
 const limit = 50;
 let loading = false;
 
+// Keep screen awake
 let wakeLock = null;
 async function requestWakeLock() {
   try { wakeLock = await navigator.wakeLock.request('screen'); }
@@ -21,9 +22,9 @@ async function requestWakeLock() {
 }
 async function releaseWakeLock() { if (wakeLock) await wakeLock.release(); }
 
-// Upload logic with error handling
+// Upload files
 uploadBtn.addEventListener('click', async () => {
-  const files = Array.from(fileInput.files);
+  const files = fileInput.files;
   if (!files.length) return alert('Select files first');
 
   uploadBtn.disabled = true;
@@ -33,45 +34,40 @@ uploadBtn.addEventListener('click', async () => {
   const totalFiles = files.length;
   uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
 
-  for (const file of files) {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', UPLOAD_PRESET);
-
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error(`Failed to upload ${file.name}:`, errText);
-        uploadStatus.textContent = `Failed to upload ${file.name}`;
-        continue; // skip to next file
-      }
-
-      const data = await response.json();
-      console.log('Uploaded:', data.secure_url);
-
-    } catch (err) {
-      console.error(`Upload error for ${file.name}:`, err);
-      uploadStatus.textContent = `Upload error: ${file.name}`;
-    } finally {
+  try {
+    for (let file of files) {
+      await uploadSingleFile(file);
       uploadedFiles++;
       uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
     }
+    uploadStatus.textContent = `Uploaded ${totalFiles} files`;
+    fileInput.value = '';
+    page = 0;
+    gallery.innerHTML = '';
+    fetchGallery();
+  } catch (err) {
+    console.error(err);
+    uploadStatus.textContent = 'Upload failed!';
+  } finally {
+    uploadBtn.disabled = false;
+    releaseWakeLock();
   }
-
-  uploadStatus.textContent = `Uploaded ${uploadedFiles}/${totalFiles}`;
-  fileInput.value = '';
-  page = 0;
-  gallery.innerHTML = '';
-  fetchGallery();
-
-  uploadBtn.disabled = false;
-  releaseWakeLock();
 });
+
+function uploadSingleFile(file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    xhr.onload = () => resolve();
+    xhr.onerror = () => reject();
+
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
+    xhr.send(formData);
+  });
+}
 
 // Fetch gallery
 async function fetchGallery() {
@@ -93,6 +89,7 @@ async function fetchGallery() {
       const checkbox = div.querySelector('.checkbox');
       const img = div.querySelector('img');
 
+      // Lazy load thumbnail
       const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) { img.src = img.dataset.src; obs.unobserve(img); }
@@ -100,11 +97,13 @@ async function fetchGallery() {
       });
       observer.observe(img);
 
+      // Click div/image to toggle selection
       div.addEventListener('click', (e) => {
         if (e.target.tagName !== 'INPUT') checkbox.checked = !checkbox.checked;
         div.classList.toggle('selected', checkbox.checked);
       });
 
+      // Checkbox change updates selection
       checkbox.addEventListener('change', () => {
         div.classList.toggle('selected', checkbox.checked);
       });
@@ -135,22 +134,18 @@ downloadBtn.addEventListener('click', async () => {
   uploadStatus.textContent = `Downloading: ${downloaded}/${selected.length}`;
 
   for (let url of selected) {
-    try {
-      const filename = url.split('/').pop();
-      const res = await fetch(url);
-      const blob = await res.blob();
-      const a = document.createElement('a');
-      a.href = window.URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch (err) {
-      console.error('Download failed:', err);
-    } finally {
-      downloaded++;
-      uploadStatus.textContent = `Downloading: ${downloaded}/${selected.length}`;
-    }
+    const filename = url.split('/').pop();
+    const res = await fetch(url);
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = window.URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    downloaded++;
+    uploadStatus.textContent = `Downloading: ${downloaded}/${selected.length}`;
   }
 
   uploadStatus.textContent = 'Download finished!';
