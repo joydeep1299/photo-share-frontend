@@ -3,8 +3,8 @@ const fileInput = document.getElementById('fileInput');
 const uploadStatus = document.getElementById('uploadStatus');
 const gallery = document.getElementById('gallery');
 const downloadBtn = document.getElementById('downloadBtn');
-const uploadProgressBar = document.getElementById('uploadProgress');
-const downloadProgressBar = document.getElementById('downloadProgress');
+const selectAllBtn = document.getElementById('selectAllBtn');
+const deselectAllBtn = document.getElementById('deselectAllBtn');
 
 const CLOUD_NAME = 'dj5gimioa';
 const UPLOAD_PRESET = 'unsigned_upload';
@@ -14,49 +14,33 @@ let page = 0;
 const limit = 50;
 let loading = false;
 
-// --- Upload files with proper progress calculation ---
+// Keep screen awake
+let wakeLock = null;
+async function requestWakeLock() {
+  try { wakeLock = await navigator.wakeLock.request('screen'); }
+  catch (err) { console.warn('Wake lock not supported', err); }
+}
+async function releaseWakeLock() { if (wakeLock) await wakeLock.release(); }
+
+// Upload files
 uploadBtn.addEventListener('click', async () => {
   const files = fileInput.files;
   if (!files.length) return alert('Select files first');
 
-  uploadStatus.textContent = 'Uploading...';
-  uploadProgressBar.style.width = '0%';
+  uploadBtn.disabled = true;
+  await requestWakeLock();
 
-  const totalFiles = files.length;
   let uploadedFiles = 0;
-
-  const uploadPromises = Array.from(files).map(file => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      const formData = new FormData();
-
-      formData.append('file', file);
-      formData.append('upload_preset', UPLOAD_PRESET);
-
-      xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) {
-          const percentPerFile = (e.loaded / e.total) * (1 / totalFiles);
-          const percent = Math.round((uploadedFiles / totalFiles + percentPerFile) * 100);
-          uploadProgressBar.style.width = `${percent}%`;
-        }
-      });
-
-      xhr.onload = () => {
-        uploadedFiles++;
-        resolve();
-      };
-
-      xhr.onerror = () => reject();
-
-      xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
-      xhr.send(formData);
-    });
-  });
+  const totalFiles = files.length;
+  uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
 
   try {
-    await Promise.all(uploadPromises);
-    uploadProgressBar.style.width = '100%';
-    uploadStatus.textContent = `Uploaded ${files.length} files`;
+    for (let file of files) {
+      await uploadSingleFile(file);
+      uploadedFiles++;
+      uploadStatus.textContent = `Uploading: ${uploadedFiles}/${totalFiles}`;
+    }
+    uploadStatus.textContent = `Uploaded ${totalFiles} files`;
     fileInput.value = '';
     page = 0;
     gallery.innerHTML = '';
@@ -64,10 +48,28 @@ uploadBtn.addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     uploadStatus.textContent = 'Upload failed!';
+  } finally {
+    uploadBtn.disabled = false;
+    releaseWakeLock();
   }
 });
 
-// --- Fetch images with lazy load & pagination ---
+function uploadSingleFile(file) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    xhr.onload = () => resolve();
+    xhr.onerror = () => reject();
+
+    xhr.open('POST', `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`);
+    xhr.send(formData);
+  });
+}
+
+// Fetch gallery
 async function fetchGallery() {
   if (loading) return;
   loading = true;
@@ -75,36 +77,29 @@ async function fetchGallery() {
   try {
     const res = await fetch(`${API_URL}/images?page=${page}&limit=${limit}`);
     const images = await res.json();
-    if (!images.length) {
-      loading = false;
-      return;
-    }
+    if (!images.length) { loading = false; return; }
 
-    images.forEach(url => {
+    images.forEach(imgObj => {
       const div = document.createElement('div');
       div.className = 'gallery-item';
-      div.innerHTML = `<img data-src="${url}" alt="photo"><input type="checkbox" class="checkbox" value="${url}">`;
+      div.innerHTML = `<img data-src="${imgObj.thumbnail}" data-original="${imgObj.original}" alt="photo">
+                       <input type="checkbox" class="checkbox" value="${imgObj.original}">`;
       gallery.appendChild(div);
 
       const checkbox = div.querySelector('.checkbox');
       const img = div.querySelector('img');
 
-      // Lazy load image
+      // Lazy load thumbnail
       const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            img.src = img.dataset.src;
-            obs.unobserve(img);
-          }
+          if (entry.isIntersecting) { img.src = img.dataset.src; obs.unobserve(img); }
         });
       });
       observer.observe(img);
 
-      // Click div to toggle selection
+      // Click div/image to toggle selection
       div.addEventListener('click', (e) => {
-        if (e.target.tagName !== 'INPUT') { 
-          checkbox.checked = !checkbox.checked;
-        }
+        if (e.target.tagName !== 'INPUT') checkbox.checked = !checkbox.checked;
         div.classList.toggle('selected', checkbox.checked);
       });
 
@@ -122,23 +117,23 @@ async function fetchGallery() {
   }
 }
 
-// --- Infinite scroll to fetch more images ---
+// Infinite scroll
 window.addEventListener('scroll', () => {
-  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
-    fetchGallery();
-  }
+  if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) fetchGallery();
 });
 
-// --- Download images individually ---
+// Download selected
 downloadBtn.addEventListener('click', async () => {
   const selected = Array.from(document.querySelectorAll('.checkbox:checked')).map(c => c.value);
   if (!selected.length) return alert('Select files');
 
-  uploadStatus.textContent = 'Downloading...';
-  downloadProgressBar.style.width = '0%';
+  downloadBtn.disabled = true;
+  await requestWakeLock();
 
-  for (let i = 0; i < selected.length; i++) {
-    const url = selected[i];
+  let downloaded = 0;
+  uploadStatus.textContent = `Downloading: ${downloaded}/${selected.length}`;
+
+  for (let url of selected) {
     const filename = url.split('/').pop();
     const res = await fetch(url);
     const blob = await res.blob();
@@ -149,12 +144,23 @@ downloadBtn.addEventListener('click', async () => {
     a.click();
     a.remove();
 
-    const percent = Math.round(((i + 1) / selected.length) * 100);
-    downloadProgressBar.style.width = `${percent}%`;
+    downloaded++;
+    uploadStatus.textContent = `Downloading: ${downloaded}/${selected.length}`;
   }
 
   uploadStatus.textContent = 'Download finished!';
+  downloadBtn.disabled = false;
+  releaseWakeLock();
 });
 
-// --- Initial gallery load ---
+// Select All / Deselect All
+selectAllBtn.addEventListener('click', () => {
+  document.querySelectorAll('.checkbox').forEach(c => { c.checked = true; c.closest('.gallery-item').classList.add('selected'); });
+});
+
+deselectAllBtn.addEventListener('click', () => {
+  document.querySelectorAll('.checkbox').forEach(c => { c.checked = false; c.closest('.gallery-item').classList.remove('selected'); });
+});
+
+// Initial load
 window.addEventListener('load', fetchGallery);
