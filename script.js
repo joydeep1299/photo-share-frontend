@@ -233,21 +233,4 @@ window.addEventListener('load', () => {
   loadQueue();
   fetchGallery();
 });
-const uploadWarning = document.getElementById('uploadWarning');
 
-uploadBtn.addEventListener('click', async () => {
-  uploadWarning.style.display = 'block'; // show warning
-  uploadBtn.disabled = true;
-  await requestWakeLock();
-
-  // ... your existing upload code ...
-
-  uploadWarning.style.display = 'none'; // hide warning after upload
-});
-
-
-
-  // ... your existing upload code ...
-
-  uploadWarning.style.display = 'none'; // hide warning after upload
-});
