@@ -5,9 +5,9 @@ const gallery = document.getElementById('gallery');
 const downloadBtn = document.getElementById('downloadBtn');
 
 // Replace with your Cloudinary and Render backend
-const CLOUD_NAME = 'YOUR_CLOUD_NAME';
+const CLOUD_NAME = 'dj5gimioa';
 const UPLOAD_PRESET = 'unsigned_upload';
-const API_URL = 'https://your-backend-on-render.com';
+const API_URL = 'https://photo-share-backend-z4vu.onrender.com/';
 
 // Upload files
 uploadBtn.addEventListener('click', async () => {
