@@ -9,6 +9,9 @@
 <body>
 <div class="container">
   <h1>Photo Share</h1>
+   <p id="uploadWarning" style="color: red; font-weight: bold; margin-top: 5px;">
+    আপলোড হচ্ছে, এই পেজ থেকে সরবেন না। এতে আপলোড ফেইল হয়ে যাবে।
+  </p>
 
   <div class="controls">
     <input type="file" id="fileInput" multiple>
@@ -29,5 +32,19 @@
 <button id="downloadBtn">Download Selected</button>
 
 <script src="script.js"></script>
+  <script>
+    const uploadWarning = document.getElementById('uploadWarning');
+
+uploadBtn.addEventListener('click', async () => {
+  uploadWarning.style.display = 'block'; // show warning
+  uploadBtn.disabled = true;
+  await requestWakeLock();
+
+  // ... your existing upload code ...
+
+  uploadWarning.style.display = 'none'; // hide warning after upload
+});
+
+  </script>
 </body>
 </html>
